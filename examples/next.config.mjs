@@ -16,7 +16,7 @@ export default defineNextConfig({
   reactStrictMode: true,
   swcMinify: true,
   images: {
-    domains: ["amazonaws.com"],
+    domains: ["ryanbyrne30-nextjs-example.s3.us-west-1.amazonaws.com"],
     formats: ["image/avif", "image/webp"],
   },
 });

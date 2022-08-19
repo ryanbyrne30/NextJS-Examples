@@ -3,8 +3,41 @@ import Image from "next/image";
 import { FormEvent, useState } from "react";
 import { AiFillCloseSquare } from "react-icons/ai";
 
+function UploadedImage({ url, imageKey }: { url: string; imageKey: string }) {
+  const deleteImageMutation = trpc.useMutation(["aws.deleteObject"]);
+
+  const deleteImage = () => {
+    deleteImageMutation.mutate({ key: imageKey });
+  };
+
+  if (deleteImageMutation.isSuccess) window.location.replace("");
+
+  return (
+    <div className="rounded p-1 relative">
+      <Image
+        src={url}
+        alt={imageKey}
+        width={250}
+        height={250}
+        layout="fixed"
+        objectFit="cover"
+        className={`text-center rounded`}
+      />
+      <div className="opacity-0 hover:opacity-100 absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+        <button onClick={deleteImage} className="cursor-pointer bg-rose-500">
+          delete
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function S3HomePage() {
+  const minSize = 100;
+  const maxSize = 5 * 1000000;
   const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const listObjectsQuery = trpc.useQuery(["aws.listObjects"]);
 
   const presignedUrlQuery = trpc.useQuery(
     ["aws.presignedPostUrl", { filename: file?.name || "" }],
@@ -13,9 +46,27 @@ export default function S3HomePage() {
     }
   );
 
+  const getFileOrFail = () => {
+    if (file === null) throw new Error("File does not exist");
+    return file;
+  };
+
+  const checkFileSize = (file: File) => {
+    if (file.size < minSize || file.size > maxSize)
+      alert(
+        `Invalid file size. Must be in range [${(minSize / 1000000).toFixed(
+          3
+        )}MB-${(maxSize / 1000000).toFixed(3)}MB]: ${(
+          file.size / 1000000
+        ).toFixed(5)}MB`
+      );
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (file === null) return;
+    setStatus("uploading...");
+    const file = getFileOrFail();
+    checkFileSize(file);
     const { data } = await presignedUrlQuery.refetch();
     if (data === undefined) {
       alert("Could not retrieve presigned POST url");
@@ -23,20 +74,28 @@ export default function S3HomePage() {
     }
     const { url, fields } = data;
     const formData = new FormData();
-    formData.append("file", file);
     Object.entries(fields).forEach(([k, v]) => formData.append(k, v || ""));
+    formData.append("file", file);
 
     const response = await fetch(url, {
       method: "POST",
       body: formData,
     });
+
     console.log(response);
+    if (response.status === 204) {
+      alert("Upload success");
+      window.location.replace("");
+    } else {
+      setStatus("failed");
+      alert("Something went wrong...");
+    }
   };
 
   return (
     <div>
-      <h1 className="text-center">
-        A file uploader to a private S3 bucket using presigned POST urls.
+      <h1 className="text-center font-bold text-2xl">
+        Upload images to AWS S3
       </h1>
       <form onSubmit={onSubmit} className="flex flex-col items-center p-8">
         <div className={`border-2 ${file === null && "hidden"}`}>
@@ -44,8 +103,8 @@ export default function S3HomePage() {
             <Image
               src={URL.createObjectURL(file)}
               alt="placeholder-for-image"
-              width={300}
-              height={300}
+              width={250}
+              height={250}
               layout="fixed"
               objectFit="contain"
               className={`text-center`}
@@ -55,6 +114,7 @@ export default function S3HomePage() {
         <div className="m-4 flex flex-row items-center justify-between">
           <input
             type="file"
+            accept="image/jpg,image/png,image/jpeg,image/webp"
             onChange={(e) => setFile(e.target.files?.[0] || null)}
           />
           <AiFillCloseSquare
@@ -62,10 +122,20 @@ export default function S3HomePage() {
             onClick={() => setFile(null)}
           />
         </div>
+        <span className="animate-bounce">{status}</span>
         <button className={`primary ${file === null && "hidden"}`}>
           Upload
         </button>
       </form>
+
+      <h3 className="text-xl text-center font-bold p-4">Uploaded photos</h3>
+      <ul className="grid grid-cols-1 md:grid-cols-3 justify-items-center">
+        {listObjectsQuery.data?.map((image) => (
+          <li key={image.key}>
+            <UploadedImage imageKey={image.key} url={image.url} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
