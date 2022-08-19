@@ -9,3 +9,11 @@
     --tertiary: 100, 100, 100;
   }
 }
+
+button {
+  @apply px-4 py-2 rounded shadow-sm;
+}
+
+button.primary {
+  @apply bg-secondary text-primary;
+}
