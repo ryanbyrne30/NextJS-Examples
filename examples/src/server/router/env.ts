@@ -1,6 +1,5 @@
 function getEnvVariableOrFail(variable: string) {
   const value = process.env[variable];
-  console.log("Env", value);
   if (value === undefined)
     throw new Error(`Environment Variable not set: ${variable}`);
   return value;
