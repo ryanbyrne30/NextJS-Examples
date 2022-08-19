@@ -58,6 +58,12 @@ export default function S3Tutorial() {
           urls allowing you to set permissions for POST requests sent with a
           pre-signed url.
         </p>
+        <p>
+          <span className="link">
+            <Link href="https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html"></Link>
+            AWS JavaScript SDK API Reference
+          </span>
+        </p>
       </section>
       <section>
         <h2>Create an S3 Bucket</h2>
