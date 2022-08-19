@@ -15,7 +15,21 @@ export default function S3HomePage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    const response = await presignedUrlQuery.refetch();
+    if (file === null) return;
+    const { data } = await presignedUrlQuery.refetch();
+    if (data === undefined) {
+      alert("Could not retrieve presigned POST url");
+      return;
+    }
+    const { url, fields } = data;
+    const formData = new FormData();
+    formData.append("file", file);
+    Object.entries(fields).forEach(([k, v]) => formData.append(k, v || ""));
+
+    const response = await fetch(url, {
+      method: "POST",
+      body: formData,
+    });
     console.log(response);
   };
 
