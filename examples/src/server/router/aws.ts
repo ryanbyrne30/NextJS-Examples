@@ -10,11 +10,13 @@ export const awsRouter = createRouter().query("presignedPostUrl", {
     filename: z.string(),
   }),
   async resolve({ input }) {
-    return await s3.createPresignedPost({
+    const response = await s3.createPresignedPost({
       Bucket: AWS_BUCKET_NAME,
       Fields: {
         key: `public/${input.filename}`,
       },
     });
+    console.log(response);
+    return response;
   },
 });
