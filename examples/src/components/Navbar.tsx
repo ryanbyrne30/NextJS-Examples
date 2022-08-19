@@ -31,7 +31,7 @@ export default function Navbar() {
   }, [session]);
 
   return (
-    <div className="w-screen px-4 py-1 z-50 bg-main-d border-b-2 border-tertiary">
+    <div className="w-screen px-4 py-1 z-50 bg-main-d border-b-2 border-secondary">
       <div className="flex flex-row items-center justify-between">
         <Link href="/">
           <div>

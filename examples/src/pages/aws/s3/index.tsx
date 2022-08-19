@@ -1,5 +1,7 @@
 import { trpc } from "@/utils/trpc";
+import { PresignedPost } from "aws-sdk/clients/s3";
 import Image from "next/image";
+import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { AiFillCloseSquare } from "react-icons/ai";
 
@@ -32,18 +34,15 @@ function UploadedImage({ url, imageKey }: { url: string; imageKey: string }) {
   );
 }
 
-export default function S3HomePage() {
+function Uploader() {
   const minSize = 100;
   const maxSize = 5 * 1000000;
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<string | null>(null);
-  const listObjectsQuery = trpc.useQuery(["aws.listObjects"]);
 
   const presignedUrlQuery = trpc.useQuery(
     ["aws.presignedPostUrl", { filename: file?.name || "" }],
-    {
-      enabled: false,
-    }
+    { enabled: false }
   );
 
   const getFileOrFail = () => {
@@ -62,71 +61,97 @@ export default function S3HomePage() {
       );
   };
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setStatus("uploading...");
-    const file = getFileOrFail();
-    checkFileSize(file);
+  const getPresignedUrl = async () => {
     const { data } = await presignedUrlQuery.refetch();
     if (data === undefined) {
-      alert("Could not retrieve presigned POST url");
-      return;
+      throw Error("Could not retrieve presigned POST url");
     }
-    const { url, fields } = data;
+    return data;
+  };
+
+  const createPayload = (fields: PresignedPost.Fields, file: File) => {
     const formData = new FormData();
     Object.entries(fields).forEach(([k, v]) => formData.append(k, v || ""));
     formData.append("file", file);
+    return formData;
+  };
 
-    const response = await fetch(url, {
+  const uploadFile = async (file: File) => {
+    const { url, fields } = await getPresignedUrl();
+    const payload = createPayload(fields, file);
+
+    return await fetch(url, {
       method: "POST",
-      body: formData,
+      body: payload,
     });
+  };
 
-    console.log(response);
+  const onSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+
+    const file = getFileOrFail();
+    checkFileSize(file);
+    const response = await uploadFile(file);
+
     if (response.status === 204) {
       alert("Upload success");
       window.location.replace("");
     } else {
-      setStatus("failed");
       alert("Something went wrong...");
+      console.log(response);
     }
   };
 
   return (
-    <div>
+    <form onSubmit={onSubmit} className="flex flex-col items-center p-8">
+      <div className={`border-2 ${file === null && "hidden"}`}>
+        {file !== null && (
+          <Image
+            src={URL.createObjectURL(file)}
+            alt="placeholder-for-image"
+            width={250}
+            height={250}
+            layout="fixed"
+            objectFit="contain"
+            className={`text-center`}
+          />
+        )}
+      </div>
+      <div className="m-4 flex flex-row items-center justify-between">
+        <input
+          type="file"
+          accept="image/jpg,image/png,image/jpeg,image/webp"
+          onChange={(e) => setFile(e.target.files?.[0] || null)}
+        />
+        <AiFillCloseSquare
+          className={`text-xl fill-rose-500 ${file === null && "hidden"}`}
+          onClick={() => setFile(null)}
+        />
+      </div>
+      <button
+        className={`primary ${file === null && "hidden"} ${
+          status === "loading" && "animate-bounce"
+        }`}
+      >
+        {status === "loading" ? "Uploading..." : "Upload"}
+      </button>
+    </form>
+  );
+}
+
+export default function S3HomePage() {
+  const listObjectsQuery = trpc.useQuery(["aws.listObjects"]);
+
+  return (
+    <div className="flex flex-col items-center">
+      <span className="text-center link">
+        <Link href="/aws/s3/tutorial">tutorial</Link>
+      </span>
       <h1 className="text-center font-bold text-2xl">
         Upload images to AWS S3
       </h1>
-      <form onSubmit={onSubmit} className="flex flex-col items-center p-8">
-        <div className={`border-2 ${file === null && "hidden"}`}>
-          {file !== null && (
-            <Image
-              src={URL.createObjectURL(file)}
-              alt="placeholder-for-image"
-              width={250}
-              height={250}
-              layout="fixed"
-              objectFit="contain"
-              className={`text-center`}
-            />
-          )}
-        </div>
-        <div className="m-4 flex flex-row items-center justify-between">
-          <input
-            type="file"
-            accept="image/jpg,image/png,image/jpeg,image/webp"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-          <AiFillCloseSquare
-            className={`text-xl fill-rose-500 ${file === null && "hidden"}`}
-            onClick={() => setFile(null)}
-          />
-        </div>
-        <span className="animate-bounce">{status}</span>
-        <button className={`primary ${file === null && "hidden"}`}>
-          Upload
-        </button>
-      </form>
+      <Uploader />
 
       <h3 className="text-xl text-center font-bold p-4">Uploaded photos</h3>
       <ul className="grid grid-cols-1 md:grid-cols-3 justify-items-center">

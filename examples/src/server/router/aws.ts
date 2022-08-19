@@ -22,14 +22,14 @@ export const awsRouter = createRouter()
   })
   .query("listObjects", {
     async resolve() {
-      const prefix = "public/";
       const data = await s3
         .listObjects({
           Bucket: AWS_BUCKET_NAME,
           MaxKeys: 10,
-          Prefix: prefix,
+          Prefix: "public/",
         })
         .promise();
+
       // filter only image files
       const images = data.Contents?.filter((c) => {
         const key = c.Key;
@@ -37,6 +37,7 @@ export const awsRouter = createRouter()
         if (key === undefined || extension === undefined) return false;
         return ["png", "jpg", "jpeg", "webp"].includes(extension);
       });
+
       return images?.map((image) => ({
         url: `https://${AWS_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${image.Key}`,
         key: image.Key || "",
