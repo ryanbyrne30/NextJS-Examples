@@ -60,8 +60,9 @@ export default function S3Tutorial() {
         </p>
         <p>
           <span className="link">
-            <Link href="https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html"></Link>
-            AWS JavaScript SDK API Reference
+            <Link href="https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html">
+              AWS JavaScript SDK API Reference
+            </Link>
           </span>
         </p>
       </section>
