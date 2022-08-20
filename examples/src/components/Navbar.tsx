@@ -13,6 +13,10 @@ const links = [
     label: "AWS",
     href: "/aws",
   },
+  {
+    label: "Images",
+    href: "/images",
+  },
 ];
 
 const authLinks: { label: string; href: string }[] = [];
