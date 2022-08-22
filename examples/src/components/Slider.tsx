@@ -4,13 +4,13 @@ import ReactSlider from "react-slider";
 export default function Slider({
   value,
   setValue,
-  suffix = "",
+  label = "",
   max = 100,
   min = 0,
 }: {
   value: number;
   setValue: Dispatch<SetStateAction<number>>;
-  suffix?: string;
+  label?: string;
   max?: number;
   min?: number;
 }) {
@@ -25,6 +25,7 @@ export default function Slider({
         value={value}
         onChange={(v: number) => setValue(v)}
       />
+      <label>{label}</label>
       <input
         className="border p-1"
         onChange={(e) => setValue(parseInt(e.target.value))}
