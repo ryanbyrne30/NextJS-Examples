@@ -1,23 +1,25 @@
-import Image from "next/image";
-import { ChangeEvent, useEffect, useState } from "react";
+import { ChangeEvent, Dispatch, SetStateAction } from "react";
 import { AiFillCloseSquare } from "react-icons/ai";
-import ImageCropModal from "./ImageCropModal";
 
-export default function ImageUploader() {
-  const [image, setImage] = useState<File | Blob | null>(null);
-  const [modalState, setModalState] = useState(false);
-  const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
+export default function ImageUploader({
+  setImage,
+}: {
+  image: File | Blob | null;
+  setImage: Dispatch<SetStateAction<File | Blob | null>>;
+}) {
+  // const [modalState, setModalState] = useState(false);
+  // const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target.files?.[0] || null;
-    if (input !== null) setModalState(true);
-    else setModalState(false);
+    // if (input !== null) setModalState(true);
+    // else setModalState(false);
     setImage(input);
   };
 
-  useEffect(() => {
-    if (image === null) setCroppedImage(null);
-  }, [image]);
+  // useEffect(() => {
+  //   if (image === null) setCroppedImage(null);
+  // }, [image]);
 
   return (
     <div className="flex flex-col items-center">
@@ -25,7 +27,7 @@ export default function ImageUploader() {
         <input type="file" accept="image/*" onChange={onChange} />
         <AiFillCloseSquare className="text-xl" onClick={() => setImage(null)} />
       </div>
-
+      {/* 
       <ImageCropModal
         image={image}
         isOpen={modalState}
@@ -37,14 +39,16 @@ export default function ImageUploader() {
         href={croppedImage !== null ? URL.createObjectURL(croppedImage) : ""}
         download
       >
-        <Image
-          src={croppedImage !== null ? URL.createObjectURL(croppedImage) : ""}
-          layout="fixed"
-          height={150}
-          width={150}
-          alt="Cropped image will appear here"
-        />
-      </a>
+        <div className="rounded-full overflow-hidden">
+          <Image
+            src={croppedImage !== null ? URL.createObjectURL(croppedImage) : ""}
+            layout="fixed"
+            height={150}
+            width={150}
+            alt="Cropped image will appear here"
+          />
+        </div>
+      </a> */}
     </div>
   );
 }
