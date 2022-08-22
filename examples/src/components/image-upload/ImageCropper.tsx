@@ -42,18 +42,18 @@ const cropImage = (
   canvas.toBlob(
     (newImage) => {
       if (newImage === null) return;
-      // setCroppedImage(newImage);
+      setCroppedImage(newImage);
 
       // compress image
-      new Compressor(newImage, {
-        quality,
-        success: (compressedImage) => {
-          setCroppedImage(compressedImage);
-        },
-      });
+      // new Compressor(newImage, {
+      //   quality,
+      //   success: (compressedImage) => {
+      //     setCroppedImage(compressedImage);
+      //   },
+      // });
     },
     "image/jpeg",
-    1.0
+    quality
   );
 };
 
