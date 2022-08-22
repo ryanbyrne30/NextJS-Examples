@@ -2,11 +2,13 @@
 import { Dispatch, SetStateAction, useEffect, useState } from "react";
 import ReactCrop, { Crop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
+import Compressor from "compressorjs";
 
 const cropImage = (
   thumbnailSize: number,
   imageEl: HTMLImageElement,
   crop: Crop,
+  quality: number,
   setCroppedImage: Dispatch<SetStateAction<Blob | null>>
 ) => {
   const canvas = document.createElement("canvas");
@@ -37,11 +39,27 @@ const cropImage = (
     crop.height
   );
 
-  canvas.toBlob((newImage) => setCroppedImage(newImage), "image/jpg", 0.5);
+  canvas.toBlob(
+    (newImage) => {
+      if (newImage === null) return;
+      // setCroppedImage(newImage);
+
+      // compress image
+      new Compressor(newImage, {
+        quality,
+        success: (compressedImage) => {
+          setCroppedImage(compressedImage);
+        },
+      });
+    },
+    "image/jpeg",
+    1.0
+  );
 };
 
 export default function ImageCropper({
   image,
+  quality = 0.8,
   isOpen,
   setIsOpen,
   size,
@@ -51,6 +69,7 @@ export default function ImageCropper({
   className,
 }: {
   image: File | Blob | null;
+  quality?: number;
   isOpen: boolean;
   setIsOpen: Dispatch<SetStateAction<boolean>>;
   size: number;
@@ -70,7 +89,7 @@ export default function ImageCropper({
 
   const onCrop = () => {
     if (loadedImage !== null) {
-      cropImage(size, loadedImage, crop, setCroppedImage);
+      cropImage(size, loadedImage, crop, quality, setCroppedImage);
       setIsOpen(false);
     }
   };
@@ -94,10 +113,14 @@ export default function ImageCropper({
     <div
       className={
         className ||
-        "w-screen h-screen fixed top-0 left-0 bg-primary flex flex-col items-center justify-center z-50"
+        "w-screen h-screen fixed top-0 left-0 bg-primary flex flex-col items-center justify-center z-50 overflow-scroll"
       }
     >
-      <div className={imageClassName || "w-1/2 h-1/2"}>
+      <div
+        className={
+          imageClassName || "w-full h-full md:w-1/2 md:h-1/2 overflow-scroll"
+        }
+      >
         <ReactCrop
           crop={crop}
           onChange={(c) => setCrop(c)}
@@ -110,15 +133,18 @@ export default function ImageCropper({
             src={image !== null ? URL.createObjectURL(image) : ""}
             onLoad={(e) => setLoadedImage(e.currentTarget)}
             alt="Image to crop"
+            className="object-contain"
           />
         </ReactCrop>
       </div>
-      <button className="primary" onClick={onCrop}>
-        crop
-      </button>
-      <button className="secondary" onClick={() => setIsOpen(false)}>
-        cancel
-      </button>
+      <div className="p-4 flex flex-col items-center">
+        <button className="primary" onClick={onCrop}>
+          crop
+        </button>
+        <button className="secondary" onClick={() => setIsOpen(false)}>
+          cancel
+        </button>
+      </div>
     </div>
   );
 }

@@ -22,6 +22,7 @@ export default function ImagesUploadPage() {
       <ImageUploader image={image} setImage={setImage} />
       <ImageCropper
         image={image}
+        quality={0.8}
         isOpen={modalState}
         setIsOpen={setModalState}
         size={size}
